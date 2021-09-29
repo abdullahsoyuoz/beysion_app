@@ -1,0 +1,552 @@
+import 'package:beysion/Utility/Colors.dart';
+import 'package:beysion/Utility/FakeData.dart';
+import 'package:beysion/Utility/Icons.dart';
+import 'package:beysion/Utility/util.dart';
+import 'package:beysion/constant/app_configurations.dart';
+import 'package:beysion/constant/colors_theme_widget.dart';
+import 'package:beysion/rest/controller/seller/seller_order_provider.dart';
+import 'package:beysion/rest/entity/seller/seller_entity.dart';
+import 'package:beysion/rest/entity/seller/seller_order_detail_entity.dart';
+import 'package:beysion/rest/response_models/base_response.dart';
+import 'package:beysion/rest/response_models/ok_response.dart';
+import 'package:beysion/rest/service/seller/seller_service.dart';
+import 'package:beysion/utility/Widgets.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
+class SellerSalesDetailTabletPage extends StatefulWidget {
+  String orderCode;
+  SellerSalesDetailTabletPage(this.orderCode);
+  @override
+  _SellerSalesDetailTabletPageState createState() => _SellerSalesDetailTabletPageState();
+}
+
+class _SellerSalesDetailTabletPageState extends State<SellerSalesDetailTabletPage> {
+  ScrollController listViewController;
+  var selectedAppBarMarketItem = 0;
+  bool valueItem = false;
+  bool valueAllProductChecked = false;
+
+
+  @override
+  void initState() {
+    super.initState();
+    print('ORDER CODEE ${widget.orderCode}');
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      Provider.of<SellerOrderProvider>(context, listen: false).getSellerOrderShowDataController(widget.orderCode);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: buildAppBarSellerTablet(context),
+      body: buildBody(context),
+    );
+  }
+
+  buildBody(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(
+                vertical: getSize(context, true, 15 / 415),
+                horizontal: getSize(context, true, 20 / 415)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Bestelldetails",
+                  style: GoogleFonts.overpass(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black),),
+                OutlineButton(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(right: 5),
+                        child: FaIcon(FontAwesomeIcons.filePdf, color: BeysionColors.orange, size: getSize(context, true, 10/415),),
+                      ),
+                      Text(
+                        "Drucken",
+                        style: GoogleFonts.overpass(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black),
+                      ),
+                    ],
+                  ),
+                  onPressed: () {},
+                ),
+              ],
+            ),
+          ),
+          buildSalesContent(context)
+        ],
+      ),
+    );
+  }
+
+  buildSalesContent(BuildContext context) {
+    SellerOrderDetailEntity sellerOrderDetailEntity = Provider.of<SellerOrderProvider>(context, listen: true).sellerOrderDetailEntity;
+    return buildContainer(context, Column(
+      children: [
+        sellerOrderDetailEntity!=null ?
+        buildOrderCard(context): SizedBox(),
+        Divider(),
+        sellerOrderDetailEntity.products!=null && sellerOrderDetailEntity.products.length>0?
+        ListView.builder(
+            itemCount: sellerOrderDetailEntity.products.length,
+            shrinkWrap: true,
+            scrollDirection: Axis.vertical,
+            physics: NeverScrollableScrollPhysics(),
+            controller: listViewController,
+            itemBuilder: (context,index){
+          return buildListInProductItem(context,  sellerOrderDetailEntity.products[index]);
+        }): SizedBox(),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: sellerOrderDetailEntity.detail.status!=4 ? MainAxisAlignment.spaceBetween: MainAxisAlignment.center,
+          children: [
+            OutlineButton(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(right: 5),
+                    child: Image.asset(IconsPath.approve),
+                  ),
+                  Text(
+                    "Bestellung bestätigen",
+                    style: GoogleFonts.overpass(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black),
+                  ),
+                ],
+              ),
+              onPressed: () {
+                _showDialogApprovedOrder();
+              },
+            ),
+            sellerOrderDetailEntity.detail.status!=4
+                ? OutlineButton(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(right: 5),
+                    child: Icon(Icons.close, color: BeysionColors.yellow,),
+                  ),
+                  Text(
+                    "Stornieren",
+                    style: GoogleFonts.overpass(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black),
+                  ),
+                ],
+              ),
+              onPressed: () {
+                _showDialogCancelledOrder(sellerOrderDetailEntity.detail.ordercode);
+              },
+            )
+                : SizedBox(),
+          ],
+        ),
+      ],
+    ));
+  }
+
+  void _showDialogCancelledOrder(String orderCode) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        // return object of type Dialog
+        return AlertDialog(
+          title: new Text("Bestellung stornieren"),
+          content: new Text("Möchten Sie die Bestellung stornieren?"),
+          actions: <Widget>[
+            // usually buttons at the bottom of the dialog
+            new FlatButton(
+              child: new Text("Ja"),
+              onPressed: () {
+                Navigator.of(context).pop();
+                cancelledOrder(orderCode);
+              },
+            ),new FlatButton(
+              child: new Text("Nein"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void cancelledOrder (String orderCode) async {
+    SellerService sellerService = new SellerService();
+    BaseResponse responseData = await sellerService.cancelOrder(orderCode);
+    if (responseData.body != null) {
+      if(responseData is OkResponse){
+        Provider.of<SellerOrderProvider>(context, listen: false).getSellerOrderShowDataController(orderCode);
+        Provider.of<SellerOrderProvider>(context, listen: false).getSellerOrdersListDataController();
+      }
+    }
+  }
+
+  void _showDialogApprovedOrder() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        // return object of type Dialog
+        return AlertDialog(
+          title: new Text("Bestätigung"),
+          content: new Text("Möchten Sie die Bestellung bestätigen?"),
+          actions: <Widget>[
+            // usually buttons at the bottom of the dialog
+            new FlatButton(
+              child: new Text("Ja"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),new FlatButton(
+              child: new Text("Nein"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  buildOrderCard(BuildContext context) {
+    SellerOrderDetailEntity sellerOrderDetailEntity = Provider.of<SellerOrderProvider>(context, listen: true).sellerOrderDetailEntity;
+
+    return sellerOrderDetailEntity.detail!=null ? Container(
+      width: getSize(context, true, 1),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 1,
+                child: Text(
+                  "Bestellnummer",
+                  style: GoogleFonts.overpass(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: BeysionColors.blueNavy),
+                ),
+              ),
+              SizedBox(width: 10,),
+              Expanded(
+                flex: 3,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      "${sellerOrderDetailEntity!=null && sellerOrderDetailEntity.detail.ordercode!=null ? sellerOrderDetailEntity.detail.ordercode: "Load"}",
+                      style: GoogleFonts.overpass(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: BeysionColors.blueNavy),
+                    ),
+                    Container(
+                      width: getSize(context, true, 170 / 415),
+                      margin: EdgeInsets.only(
+                          left: getSize(context, true, 10 / 415)),
+                      decoration: BoxDecoration(
+                          color: orderStatusColor(sellerOrderDetailEntity.detail),
+                          borderRadius: BorderRadius.all(Radius.circular(5))),
+                      child: Center(
+                        child: Text(
+                          "${orderStatusStr(sellerOrderDetailEntity.detail)}",
+                          style: GoogleFonts.overpass(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
+          Divider(color: BeysionColors.gray1,),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 1,
+                child: Text(
+                  "Bestelldatum",
+                  style: GoogleFonts.overpass(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black),
+                ),
+              ),
+              SizedBox(width: 10,),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  "${sellerOrderDetailEntity!=null && sellerOrderDetailEntity.detail.deliveryTime2 !=null ? sellerOrderDetailEntity.detail.deliveryTime2 : "Load"}",
+                  style: GoogleFonts.overpass(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black),
+                ),
+              )
+            ],
+          ),
+          SizedBox(height: getSize(context, true, 5 / 415),),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 1,
+                child: Text(
+                  "Kunden",
+                  style: GoogleFonts.overpass(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black),
+                ),
+              ),
+              SizedBox(width: 10,),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  "${sellerOrderDetailEntity !=null && sellerOrderDetailEntity.buyer!=null ? "${sellerOrderDetailEntity.buyer.name} ${sellerOrderDetailEntity.buyer.surname}": "Load"}",
+                  style: GoogleFonts.overpass(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black),
+                ),
+              )
+            ],
+          ),
+          SizedBox(height: getSize(context, true, 5 / 415),),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 1,
+                child: Text(
+                  "Addresse",
+                  style: GoogleFonts.overpass(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black),
+                ),
+              ),
+              SizedBox(width: 10,),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  "${sellerOrderDetailEntity.address!=null && sellerOrderDetailEntity.address.addressText!=null ? sellerOrderDetailEntity.address.addressText : "Load"}",
+                  overflow: TextOverflow.fade,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: GoogleFonts.overpass(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black),
+                ),
+              )
+            ],
+          ),
+          SizedBox(height: getSize(context, true, 5 / 415),),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 1,
+                child: Text(
+                  "Lieferart",
+                  style: GoogleFonts.overpass(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black),
+                ),
+              ),
+              SizedBox(width: 10,),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  "${sellerOrderDetailEntity!=null && sellerOrderDetailEntity.detail!=null ? "${sellerOrderDetailEntity.detail.deliveryType} - ${sellerOrderDetailEntity.detail.deliveryTime2}" : "Load"}",
+                  style: GoogleFonts.overpass(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black),
+                ),
+              )
+            ],
+          ),
+          SizedBox(
+            height: getSize(context, true, 8 / 415),
+          ),
+        ],
+      ),
+    ): CircularProgressIndicator();
+  }
+
+
+  buildListInProductItem(BuildContext context, ProductSeller productSeller) {
+    int productQuantity = productSeller.qty;
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Expanded(
+              flex: 1,
+              child: Image.network(
+                productSeller.image,
+                fit: BoxFit.fitHeight,
+                width: getSize(context, true, 50 / 415),
+                height: getSize(context, true, 50 / 415),
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: Text("${productSeller.name}",
+                style: GoogleFonts.overpass(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black),
+                maxLines: 2,
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,),),
+            Expanded(
+              flex: 1,
+              child: Container(
+                padding: EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                    border: Border.all(color: BeysionColors.orange),
+                    borderRadius: BorderRadius.circular(5)
+                ),
+                child: FittedBox(
+                  fit: BoxFit.fitWidth,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      InkWell(
+                        child: Container(
+                          width: getSize(context, true, 13 / 415),
+                          height: getSize(context, true, 13 / 415),
+                          decoration: BoxDecoration(
+                              shape: BoxShape.circle, color: BeysionColors.yellow),
+                          child: Center(child: Text("-", style: GoogleFonts.overpass(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),)),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            if(productSeller.qty > 0){
+                              productSeller.qty--;
+                            }
+                          });
+                        },
+                      ),
+                      Container(
+                        alignment: Alignment.center,
+                        margin: EdgeInsets.all(4),
+                        width: getSize(context, true, 22 / 415),
+                        height: getSize(context, true, 22 / 415),
+                        child: Text(productSeller.qty.toString()),
+                      ),
+                      InkWell(
+                        child: Container(
+                          width: getSize(context, true, 13 / 415),
+                          height: getSize(context, true, 13 / 415),
+                          decoration: BoxDecoration(
+                              shape: BoxShape.circle, color: BeysionColors.yellow),
+                          child: Center(child: Text("+", style: GoogleFonts.overpass(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),)),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            productSeller.qty++;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Center(
+                child: Text("${productSeller.price} €",
+                  style: GoogleFonts.overpass(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black),
+                  maxLines: 2,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,),
+              ),),
+          ],
+        ),
+        Divider(),
+      ],
+    );
+  }
+
+  String orderStatusStr(DetailSeller orderEntity){
+    try{
+      if(orderEntity.status==0){
+        return "warten auf die Bestätigung";
+      }else if(orderEntity.status == 1){
+        return "wird vorbereitet";
+      }else if(orderEntity.status == 2){
+        return "Abholbereit / Versandbereit";
+      }else if(orderEntity.status == 3){
+        return "wird vorbereitet";
+      }else if(orderEntity.status == 4){
+        return "Bestellung storniert";
+      }else {
+        return " ";
+      }
+
+    }catch(e){
+      return "StatusNull";
+    }
+  }
+
+  Color orderStatusColor(DetailSeller detailSeller){
+    try{
+      if(detailSeller.status==0){
+        return Color(getColorHexFromStr("#5D68CC"));
+      }else if(detailSeller.status == 1){
+        return Color(getColorHexFromStr("#FFC934"));
+      }else if(detailSeller.status == 2){
+        return Color(getColorHexFromStr("#1EC1FF"));
+      }else if(detailSeller.status == 3){
+        return Color(getColorHexFromStr("#1EC1FF"));
+      }else if(detailSeller.status == 4){
+        return Color(getColorHexFromStr("#e41200"));
+      }else {
+        return Colors.white;
+      }
+    }catch(e){
+      return Colors.white;
+    }
+  }
+
+}

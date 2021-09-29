@@ -1,0 +1,92 @@
+/*
+ *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *  Copyright (C) 2021 Rich Design - All Rights Reserved
+ *  Unauthorized copying of this file, via any medium is strictly prohibited
+ *  Proprietary and confidential.
+ *
+ *  Written by Yakup Zengin <yakup@designsrich.com>, March 2021
+ *
+ */
+
+import 'package:beysion/rest/persistent.dart';
+
+class SellerOrderEntity extends Persistent{
+  SellerOrderEntity({
+    this.orders,
+    this.total,
+    this.totalPage,
+  });
+
+  final List<SellerOrderData> orders;
+  final int total;
+  final int totalPage;
+
+  factory SellerOrderEntity.fromJson(Map<String, dynamic> json) => SellerOrderEntity(
+    orders: json["orders"] == null ? null : List<SellerOrderData>.from(json["orders"].map((x) => SellerOrderData.fromJson(x))),
+    total: json["total"] == null ? null : json["total"],
+    totalPage: json["totalPage"] == null ? null : json["totalPage"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "orders": orders == null ? null : List<dynamic>.from(orders.map((x) => x.toJson())),
+    "total": total == null ? null : total,
+    "totalPage": totalPage == null ? null : totalPage,
+  };
+}
+
+class SellerOrderData {
+  SellerOrderData({
+    this.ordercode,
+    this.createdAt,
+    this.name,
+    this.deliveryType,
+    this.deliveryTime,
+    this.deliveryTime2,
+    this.totalItem,
+    this.total,
+    this.status,
+    this.cargoPrice,
+    this.pid,
+  });
+
+  final String ordercode;
+  final DateTime createdAt;
+  final String name;
+  final int deliveryType;
+  final DateTime deliveryTime;
+  final String deliveryTime2;
+  final int totalItem;
+  final String total;
+  final int status;
+  final String cargoPrice;
+  final int pid;
+
+  factory SellerOrderData.fromJson(Map<String, dynamic> json) => SellerOrderData(
+    ordercode: json["ordercode"] == null ? null : json["ordercode"],
+    createdAt: json["created_at"] == null ? null : DateTime.parse(json["created_at"]),
+    name: json["name"] == null ? null : json["name"],
+    deliveryType: json["deliveryType"] == null ? null : json["deliveryType"],
+    deliveryTime: json["deliveryTime"] == null ? null : DateTime.parse(json["deliveryTime"]),
+    deliveryTime2: json["deliveryTime2"] == null ? null : json["deliveryTime2"],
+    totalItem: json["totalItem"] == null ? null : json["totalItem"],
+    total: json["total"] == null ? null : json["total"],
+    status: json["status"] == null ? null : json["status"],
+    cargoPrice: json["cargoPrice"] == null ? null : json["cargoPrice"],
+    pid: json["pid"] == null ? null : json["pid"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "ordercode": ordercode == null ? null : ordercode,
+    "created_at": createdAt == null ? null : createdAt.toIso8601String(),
+    "name": name == null ? null : name,
+    "deliveryType": deliveryType == null ? null : deliveryType,
+    "deliveryTime": deliveryTime == null ? null : deliveryTime.toIso8601String(),
+    "deliveryTime2": deliveryTime2 == null ? null : deliveryTime2,
+    "totalItem": totalItem == null ? null : totalItem,
+    "total": total == null ? null : total,
+    "status": status == null ? null : status,
+    "cargoPrice": cargoPrice == null ? null : cargoPrice,
+    "pid": pid == null ? null : pid,
+  };
+}

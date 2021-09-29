@@ -1,0 +1,71 @@
+name: beysion
+description: Yakup Zengin, Beysion IOS & Android Application Development.
+
+authors:
+  - Creator <yakup@designsrich.com>
+  - Development <yakup@designsrich.com>
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # flutter_svg: ^0.18.1
+  auto_size_text: ^2.1.0
+  carousel_pro: ^1.0.0
+  dotted_line: ^2.0.2
+  dotted_border: ^1.0.7
+  flutter_masked_text: ^0.8.0
+  smooth_star_rating: ^1.1.1
+  font_awesome_flutter: ^8.11.0
+  google_fonts: ^1.1.1
+  fluttertoast: ^7.0.2
+  photo_view: ^0.10.3
+  simpleprogressdialog: ^1.0.7
+  awesome_dialog: ^1.2.1
+  google_maps_flutter: 0.5.28+1
+  google_map_location_picker: 3.3.2
+
+
+  #######
+  shared_preferences: ^0.5.8
+  provider: ^4.0.2
+  intl: ^0.16.0
+  url_launcher: ^5.0.2
+  cached_network_image: 2.1.0
+  dot_navigation_bar: ^0.1.1
+  ### LAST-CHANCE
+
+  sleek_circular_slider: ^1.2.0
+  syncfusion_flutter_charts: ^18.4.46
+  timelines: ^0.0.2+1
+
+  # TODO: googleFonts.overpass , tasarımdaki font
+
+  cupertino_icons: ^1.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  http: ^0.12.0+2
+  flutter_launcher_icons: ^0.8.1
+
+flutter_icons:
+  ios: true
+  android: true
+  image_path_ios: "assets/logos/app_icon.jpg"
+  image_path_android: "assets/logos/app_icon.jpg"
+  adaptive_icon_background: "assets/logos/app_icon.jpg"
+  adaptive_icon_foreground: "assets/logos/app_icon.jpg"
+
+
+flutter:
+  uses-material-design: true
+
+  assets:
+      - assets/images/
+      - assets/icons/
+      - assets/logos/
